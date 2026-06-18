@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>閣友反饋 - 明熹閣</title>
+    <style>
+        /* 基礎古風配色與重設 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #0c1114; /* 墨黑底色 */
+            color: #d4bc8c;           /* 典雅古風金 */
+            font-family: "PingFang TC", "Noto Serif TC", "Microsoft JhengHei", serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Canvas 特效層：煙霧與金箔 */
+        #effect-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 穿透點擊，不影響捲動 */
+            z-index: 1;
+        }
+
+        /* 主容器：專為手機瀏覽設計 */
+        .phone-container {
+            width: 100%;
+            max-width: 500px; /* 限制手機黃金瀏覽寬度 */
+            background-color: #12191d; /* 墨青色作爲內容背景 */
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.95);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+            border-left: 1px solid #243037;
+            border-right: 1px solid #243037;
+            
+            /* 進入動畫 */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInPage 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        /* 網頁整體進入特效 */
+        @keyframes fadeInPage {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 頭圖 Banner */
+        .banner {
+            width: 100%;
+            position: relative;
+            border-bottom: 2px solid #d4bc8c;
+            font-size: 0; /* 消除圖片下排空隙 */
+        }
+
+        .banner img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* 主事卦師文字介紹區塊 */
+        .shop-intro-block {
+            text-align: center;
+            padding: 30px 20px 10px 20px;
+            position: relative;
+        }
+
+        .shop-intro-block .shop-tag {
+            font-size: 0.9rem;
+            color: #8fa4af;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .shop-intro-block .master-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #e6cb9a;
+            letter-spacing: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            position: relative;
+            display: inline-block;
+            padding-bottom: 12px;
+        }
+
+        .shop-intro-block .master-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #d4bc8c, transparent);
+        }
+
+        /* 滾動浮現基礎設置 */
+        .reveal {
+            opacity: 0;
+            transform: translateY(35px);
+            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 內容區塊卡片外框 (自我介紹 & 注意事項) */
+        .content-card-wrapper {
+            padding: 10px 18px;
+        }
+
+        .content-card {
+            width: 100%;
+            background-color: #0b1013;
+            border: 1px solid #232e34;
+            padding: 10px;
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            margin-bottom: 5px;
+        }
+
+        .content-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        /* 古風裝飾分隔線 */
+        .divider {
+            text-align: center;
+            padding: 30px 0 15px 0;
+            position: relative;
+        }
+        
+        .divider::before, .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 25%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #d4bc8c);
+        }
+        .divider::before { left: 5%; }
+        .divider::after { right: 5%; transform: rotate(180deg); }
+
+        .divider span {
+            font-size: 1.15rem;
+            letter-spacing: 6px;
+            color: #d4bc8c;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            font-weight: bold;
+            display: inline-block;
+            padding: 0 10px;
+        }
+
+        /* 顧客反饋截圖清單 */
+        .feedback-list {
+            padding: 5px 18px 20px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 每一張截圖的古風卡片框 */
+        .feedback-item {
+            width: 100%;
+            background-color: #0b1013;
+            border: 1px solid #232e34;
+            padding: 10px;
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .feedback-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+            filter: sepia(6%) contrast(101%); /* 微調圖片使其更融入古風色調 */
+        }
+
+        /* 四角古風邊框裝飾 */
+        .feedback-item::before, .content-card::before {
+            content: "";
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border: 1px solid rgba(212, 188, 140, 0.15);
+            pointer-events: none;
+            border-radius: 4px;
+        }
+
+        /* LINE@ 按鈕區塊 */
+        .cta-container {
+            padding: 25px 18px 45px 18px;
+            text-align: center;
+        }
+
+        .line-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 320px;
+            background: linear-gradient(135deg, #161e23 0%, #0d1316 100%);
+            border: 1px solid #d4bc8c;
+            color: #e6cb9a;
+            padding: 16px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            text-decoration: none;
+            border-radius: 40px;
+            box-shadow: 0 6px 20px rgba(212, 188, 140, 0.15), inset 0 0 10px rgba(212, 188, 140, 0.05);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        /* 按鈕古風光暈呼吸效果 */
+        .line-button::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 188, 140, 0.15), transparent);
+            transition: all 0.6s ease;
+        }
+
+        .line-button:hover::before, .line-button:active::before {
+            left: 100%;
+        }
+
+        .line-button:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(212, 188, 140, 0.1);
+        }
+
+        .line-button .btn-icon {
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 頁尾 */
+        .footer {
+            text-align: center;
+            padding: 35px 20px;
+            font-size: 0.85rem;
+            color: #5c6c75;
+            border-top: 1px solid #1f2a30;
+            letter-spacing: 4px;
+            background-color: #0b1013;
+        }
+
+        .footer .footer-spirit {
+            font-size: 1rem;
+            color: #af9c75;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="effect-canvas"></canvas>
+
+    <div class="phone-container">
+        
+        <div class="banner">
+            <img src="https://meee.com.tw/LxAXCqr.png" alt="明熹閣 - 頭版橫圖">
+        </div>
+
+        <div class="shop-intro-block reveal">
+            <div class="shop-tag">金烏商行 - 明熹閣</div>
+        </div>
+
+        <div class="divider reveal">
+            <span>駐閣卦師</span>
+        </div>
+
+        <div class="content-card-wrapper reveal">
+            <div class="content-card">
+                <img src="https://meee.com.tw/WlkBkkG.png" alt="自我介紹">
+            </div>
+        </div>
+
+        <div class="divider reveal">
+            <span>明熹閣守則</span>
+        </div>
+
+        <div class="content-card-wrapper reveal">
+            <div class="content-card">
+                <img src="https://meee.com.tw/xWcaxy6.png" alt="注意事項">
+            </div>
+        </div>
+
+        <div class="divider reveal">
+            <span>閣友反饋</span>
+        </div>
+
+        <div class="feedback-list">
+            <div class="feedback-item reveal">
+                <img src="https://meee.com.tw/v2l0ngS.png" alt="閣友反饋一">
+            </div>
+            <div class="feedback-item reveal">
+                <img src="https://meee.com.tw/1NyWlUx.png" alt="閣友反饋二">
+            </div>
+            <div class="feedback-item reveal">
+                <img src="https://meee.com.tw/5qknuWg.png" alt="閣友反饋三">
+            </div>
+            <div class="feedback-item reveal">
+                <img src="https://meee.com.tw/Fa9t2x1.png" alt="閣友反饋四">
+            </div>
+            <div class="feedback-item reveal">
+                <img src="https://meee.com.tw/IIMbr5R.png" alt="閣友反饋五">
+            </div>
+            <div class="feedback-item reveal">
+                <img src="https://meee.com.tw/c2tCeWr.png" alt="閣友反饋六">
+            </div>
+        </div>
+
+        <div class="cta-container reveal">
+            <a href="https://line.me/R/ti/p/@380kvhdz?openExternalBrowser=1" target="_blank" rel="noopener noreferrer" class="line-button">
+                <span class="btn-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 5.82 2 10.53C2 12.87 3.12 14.98 4.96 16.47C4.55 18.06 3.73 19.86 3.7 19.92C3.62 20.1 3.66 20.31 3.8 20.44C3.89 20.53 4.02 20.58 4.15 20.58C4.22 20.58 4.29 20.56 4.36 20.53C4.43 20.5 6.64 19.34 8.27 18.42C9.43 18.83 10.69 19.06 12 19.06C17.52 19.06 22 15.24 22 10.53C22 5.82 17.52 2 12 2Z" stroke="#d4bc8c" stroke-width="1.5" fill="none"/>
+                        <circle cx="12" cy="10.5" r="3.5" stroke="#d4bc8c" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
+                    </svg>
+                </span>
+                點擊進入明熹閣
+            </a>
+        </div>
+
+        <div class="footer">
+            <p class="footer-spirit">卦為鏡 心為燈</p>
+            <p style="font-size: 0.72rem; margin-top: 8px; color: #43545e;">明熹閣主 卦師日沉</p>
+            <p style="font-size: 0.65rem; margin-top: 6px; color: #2c3941;">© 金烏商行 掌櫃夏蘼建造</p>
+        </div>
+    </div>
+
+    <script>
+        // --- CANVAS 煙霧繚繞與金片/金箔灑落特效 ---
+        const canvas = document.getElementById('effect-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particles = [];
+        const mists = [];
+
+        // 煙霧粒子構造
+        function createMist() {
+            return {
+                x: Math.random() * width,
+                y: height + Math.random() * 100,
+                radius: Math.random() * 80 + 60,
+                opacity: Math.random() * 0.04 + 0.01,
+                vx: Math.random() * 0.4 - 0.2,
+                vy: -(Math.random() * 0.5 + 0.3),
+                growth: Math.random() * 0.08 + 0.02
+            };
+        }
+
+        // 金箔片/金粉與竹葉粒子構造
+        function createParticle(type, initY = false) {
+            return {
+                type: type, // 'leaf' 為極深竹葉, 'goldFlake' 為形狀不規則的金箔片, 'goldDust' 為微亮金粉
+                x: Math.random() * width,
+                y: initY ? Math.random() * height : Math.random() * -60 - 20,
+                speedX: Math.random() * 1.5 - 0.5,
+                speedY: Math.random() * 1.2 + 0.8,
+                size: type === 'leaf' ? Math.random() * 6 + 5 : (type === 'goldFlake' ? Math.random() * 5 + 4 : Math.random() * 1.5 + 0.6),
+                angle: Math.random() * Math.PI * 2,
+                spin: Math.random() * 0.03 - 0.015,
+                opacity: type === 'leaf' ? Math.random() * 0.25 + 0.1 : Math.random() * 0.45 + 0.15,
+                // 用於金箔晃動效果
+                swingSpeed: Math.random() * 0.02 + 0.01,
+                swingAngle: Math.random() * Math.PI
+            };
+        }
+
+        // 初始化
+        for (let i = 0; i < 45; i++) {
+            let r = Math.random();
+            let type = 'goldDust';
+            if (r > 0.85) type = 'leaf';
+            else if (r > 0.5) type = 'goldFlake';
+            particles.push(createParticle(type, true));
+        }
+
+        for (let i = 0; i < 12; i++) {
+            mists.push(createMist());
+            mists[i].y = Math.random() * height; // 隨機分佈初始煙霧高度
+        }
+
+        // 繪製古風深色竹葉剪影
+        function drawLeaf(ctx, x, y, size, angle, opacity) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, -size);
+            ctx.quadraticCurveTo(size * 0.35, 0, 0, size);
+            ctx.quadraticCurveTo(-size * 0.35, 0, 0, -size);
+            ctx.fillStyle = `rgba(18, 25, 30, ${opacity})`; 
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 繪製旋轉下落的不規則金箔片
+        function drawGoldFlake(ctx, x, y, size, angle, opacity) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            // 不規則多邊形模擬金箔
+            ctx.moveTo(-size * 0.5, -size * 0.3);
+            ctx.lineTo(size * 0.4, -size * 0.5);
+            ctx.lineTo(size * 0.6, size * 0.2);
+            ctx.lineTo(-size * 0.2, size * 0.6);
+            ctx.closePath();
+            
+            // 金箔漸層色
+            const gradient = ctx.createLinearGradient(-size, -size, size, size);
+            gradient.addColorStop(0, `rgba(224, 196, 137, ${opacity})`);
+            gradient.addColorStop(0.5, `rgba(212, 188, 140, ${opacity * 1.2})`);
+            gradient.addColorStop(1, `rgba(168, 139, 84, ${opacity * 0.8})`);
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 繪製柔和飄逸的霧氣
+        function drawMist(ctx, m) {
+            ctx.save();
+            const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.radius);
+            grad.addColorStop(0, `rgba(120, 135, 145, ${m.opacity})`);
+            grad.addColorStop(0.5, `rgba(80, 95, 105, ${m.opacity * 0.4})`);
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 動態循環
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. 更新並繪製煙霧
+            mists.forEach((m, idx) => {
+                m.y += m.vy;
+                m.x += m.vx;
+                m.radius += m.growth;
+                
+                // 漸漸消失
+                if (m.y < -m.radius || m.radius > 200) {
+                    mists[idx] = createMist();
+                } else {
+                    drawMist(ctx, m);
+                }
+            });
+
+            // 2. 更新並繪製金箔與葉子
+            particles.forEach((p, index) => {
+                p.y += p.speedY;
+                // 加入輕微的鐘擺搖曳感
+                p.swingAngle += p.swingSpeed;
+                p.x += p.speedX + Math.sin(p.swingAngle) * 0.4;
+                p.angle += p.spin;
+
+                if (p.y > height || p.x > width + 30 || p.x < -30) {
+                    let r = Math.random();
+                    let type = 'goldDust';
+                    if (r > 0.85) type = 'leaf';
+                    else if (r > 0.5) type = 'goldFlake';
+                    particles[index] = createParticle(type);
+                }
+
+                if (p.type === 'leaf') {
+                    drawLeaf(ctx, p.x, p.y, p.size, p.angle, p.opacity);
+                } else if (p.type === 'goldFlake') {
+                    drawGoldFlake(ctx, p.x, p.y, p.size, p.angle, p.opacity);
+                } else {
+                    // 金粉粒子
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(224, 196, 137, ${p.opacity * 0.85})`;
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = '#d4bc8c';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // 當 DOM 載入完畢後開始執行
+        window.onload = function () {
+            animate();
+            setupIntersectionObserver();
+        }
+
+        // --- 滾動浮現動畫 (Intersection Observer) ---
+        function setupIntersectionObserver() {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            const observerOptions = {
+                root: null, // viewport
+                threshold: 0.1, // 10% 的元素進入視野就觸發
+                rootMargin: "0px 0px -50px 0px" // 微調觸發時機
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            reveals.forEach(el => {
+                observer.observe(el);
+            });
+        }
+    </script>
+</body>
+</html>
